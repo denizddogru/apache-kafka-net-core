@@ -1,2 +1,8 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿using Kafka.Producer;
+
 Console.WriteLine("Hello, World!");
+
+
+var kafkaService = new KafkaService();
+
+await kafkaService.CreateTopicAsync();
