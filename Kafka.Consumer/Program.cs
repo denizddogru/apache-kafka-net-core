@@ -10,6 +10,8 @@ var kafkaService = new KafkaService();
 
 //await kafkaService.ConsumeSimpleMessageWithIntKey(topicName);
 
-await kafkaService.ConsumeComplexMessageWithIntKey(topicName);
+//await kafkaService.ConsumeComplexMessageWithIntKey(topicName);
+
+await kafkaService.ConsumeComplexMessageWithIntKeyAndHeader(topicName);
 
 Console.ReadLine();
