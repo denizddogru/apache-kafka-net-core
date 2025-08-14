@@ -96,7 +96,6 @@ internal class KafkaService
 
 
     }
-
     internal async Task SendComplexMessageWithIntKey(string topicName)
     {
         var config = new ProducerConfig() { BootstrapServers = "localhost:9094" };
