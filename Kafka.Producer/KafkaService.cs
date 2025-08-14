@@ -1,5 +1,6 @@
 ﻿using Confluent.Kafka;
 using Confluent.Kafka.Admin;
+using Kafka.Producer.Events;
 
 namespace Kafka.Producer;
 
@@ -87,6 +88,40 @@ internal class KafkaService
             {
                 Console.WriteLine($"{propertyInfo.Name} : {propertyInfo.GetValue(result)}");
  
+            }
+
+            Console.WriteLine("-----------------------------------");
+            await Task.Delay(10);
+        }
+
+
+    }
+
+    internal async Task SendComplexMessageWithIntKey(string topicName)
+    {
+        var config = new ProducerConfig() { BootstrapServers = "localhost:9094" };
+
+        using var producer = new ProducerBuilder<int, OrderCreatedEvent>(config)
+            .SetValueSerializer(new CustomValueSerializer<OrderCreatedEvent>())
+            .Build();
+
+        foreach (var item in Enumerable.Range(1, 100))
+        {
+            var orderCreatedEvent = new OrderCreatedEvent() { OrderCode = Guid.NewGuid().ToString(), TotalPrice = item * 100, UserId = item };
+
+            var message = new Message<int, OrderCreatedEvent>()
+            {
+                Value = orderCreatedEvent,
+                Key = item
+            };
+
+            var result = await producer.ProduceAsync(topicName, message);
+
+
+            foreach (var propertyInfo in result.GetType().GetProperties())
+            {
+                Console.WriteLine($"{propertyInfo.Name} : {propertyInfo.GetValue(result)}");
+
             }
 
             Console.WriteLine("-----------------------------------");
