@@ -20,7 +20,7 @@ internal class KafkaService
         {
             await adminClient.CreateTopicsAsync(new[]
             {
-        new TopicSpecification() {  Name = topicName, NumPartitions = 3, ReplicationFactor = 1}
+        new TopicSpecification() {  Name = topicName, NumPartitions = 6, ReplicationFactor = 1}
             });
 
             Console.WriteLine($"Topic({topicName}) has been created.");
@@ -45,7 +45,7 @@ internal class KafkaService
 
         using var producer = new ProducerBuilder<Null, string>(config).Build();
 
-        foreach(var item in Enumerable.Range(1,10))
+        foreach (var item in Enumerable.Range(1, 10))
         {
 
             var message = new Message<Null, string>()
@@ -56,7 +56,7 @@ internal class KafkaService
             var result = await producer.ProduceAsync(topicName, message);
 
 
-            foreach(var propertyInfo in result.GetType().GetProperties())
+            foreach (var propertyInfo in result.GetType().GetProperties())
             {
                 Console.WriteLine($"{propertyInfo.Name} : {propertyInfo.GetValue(result)}");
                 await Task.Delay(200);
@@ -88,7 +88,7 @@ internal class KafkaService
             foreach (var propertyInfo in result.GetType().GetProperties())
             {
                 Console.WriteLine($"{propertyInfo.Name} : {propertyInfo.GetValue(result)}");
- 
+
             }
 
             Console.WriteLine("-----------------------------------");
@@ -147,7 +147,7 @@ internal class KafkaService
                 { "correlation_id", Encoding.UTF8.GetBytes("123") },
                 { "version", Encoding.UTF8.GetBytes("v1") }
             };
-      
+
 
             var message = new Message<int, OrderCreatedEvent>()
             {
@@ -171,5 +171,79 @@ internal class KafkaService
 
 
     }
+    
+    /// <summary>
+    /// This method selects the partition that will be read . ( In default Kafka distributes the messages to the partitions randomly.)
+    /// (Number of consumers cannot exceed the number of partitions, in that case they the overexceeding consumer will not consume any messages.)
+    /// </summary>
+    /// <param name="topicName"></param>
+    /// <returns></returns>
+    internal async Task SendMessageToSpecificPartition(string topicName)
+    {
+        var config = new ProducerConfig() { BootstrapServers = "localhost:9094" };
 
+        using var producer = new ProducerBuilder<Null, string>(config).Build();
+
+
+        foreach (var item in Enumerable.Range(1, 10))
+        {
+
+
+            var message = new Message<Null, string>()
+            {
+                Value = $"Message: {item}"
+            };
+
+            var topicPartition = new TopicPartition(topicName, new Partition(2));
+
+            var result = await producer.ProduceAsync(topicPartition, message);
+
+            foreach (var propertyInfo in result.GetType().GetProperties())
+            {
+                Console.WriteLine($"{propertyInfo.Name} : {propertyInfo.GetValue(result)}");
+            }
+
+            Console.WriteLine("**********************");
+            await Task.Delay(10);
+        }
+
+    }
+
+    /// <summary>
+    /// Sends message with Acknowledgement: 0->fire and forget, performance focus, low latency no retry
+    /// 1->send to leader, waits for ack , 
+    /// 2-> send to all, if there are multiple replicas messages are also saved to replicas, persists and prevents data loss
+    /// </summary>
+    /// <param name="topicName"></param>
+    /// <returns></returns>
+    internal async Task SendMessageWithAcknowledgement(string topicName)
+    {
+        var config = new ProducerConfig() { BootstrapServers = "localhost:9094", Acks = Acks.Leader };
+
+        using var producer = new ProducerBuilder<Null, string>(config).Build();
+
+
+        foreach (var item in Enumerable.Range(1, 10))
+        {
+
+
+            var message = new Message<Null, string>()
+            {
+                Value = $"Message: {item}"
+            };
+
+            var topicPartition = new TopicPartition(topicName, new Partition(2));
+
+            var result = await producer.ProduceAsync(topicPartition, message);
+
+            foreach (var propertyInfo in result.GetType().GetProperties())
+            {
+                Console.WriteLine($"{propertyInfo.Name} : {propertyInfo.GetValue(result)}");
+            }
+
+            Console.WriteLine("**********************");
+            await Task.Delay(10);
+        }
+
+    }
 }
